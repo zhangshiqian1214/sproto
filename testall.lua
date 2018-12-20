@@ -21,6 +21,29 @@ local sp = sproto.parse [[
 	i 8 : *integer(2)
 	j 9 : binary
 }
+
+test {
+	.package {
+		.nest {
+			a 1 : string
+			b 3 : boolean
+			c 5 : integer
+			d 6 : integer(3)
+		}
+		a 0 : string
+		b 1 : integer
+		c 2 : boolean
+		d 3 : *nest(a)
+
+		e 4 : *string
+		f 5 : *integer
+		g 6 : *boolean
+		h 7 : *foobar
+		i 8 : *integer(2)
+		j 9 : binary
+	}
+}
+
 ]]
 
 local obj = {
@@ -64,6 +87,12 @@ local code = sp:encode("foobar", obj)
 obj = sp:decode("foobar", code)
 print_r(obj)
 
+local stream = sp:encode("test.package", obj)
+local result = sp:decode("test.package", obj)
+print_r(result)
+
 -- core.dumpproto only for debug use
 local core = require "sproto.core"
 core.dumpproto(sp.__cobj)
+
+

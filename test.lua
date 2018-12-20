@@ -20,6 +20,31 @@ local sp = sproto.parse [[
 	person 0 : *Person(id)
 	others 1 : *Person
 }
+
+
+# login is namespace
+login {
+	.RoleInfo {
+		roleid     0 : integer
+		uid        1 : integer
+		nickname   2 : string
+		sex        3 : integer
+		headimgurl 4 : string
+	}
+
+	#rpc method
+	login 101 {
+		request {
+			account   0 : string  #帐号
+			password  1 : string  #密码
+			channel   2 : string  #渠道
+		}
+
+		response {
+			roleList 0 : *RoleInfo #玩家列表
+		}
+	}
+}
 ]]
 
 -- core.dumpproto only for debug use
@@ -64,3 +89,14 @@ collectgarbage "stop"
 local code = sp:encode("AddressBook", ab)
 local addr = sp:decode("AddressBook", code)
 print_r(addr)
+
+
+local roleInfo = {
+	roleid = 1234,
+	uid = 222,
+	nickname = "moong",
+	sex = 0,
+	headimgurl = "http://www.baidu.com/1.png"
+}
+local stream = sp:encode("login.RoleInfo", roleInfo)
+local result = sp:decode("login.RoleInfo", stream)

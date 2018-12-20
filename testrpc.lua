@@ -28,6 +28,33 @@ bar 3 {
 
 blackhole 4 {
 }
+
+#test namespace rpc
+test {
+	foobar 11 {
+		request {
+			what 0 : string
+		}
+		response {
+			ok 0 : boolean
+		}
+	}
+
+	foo 12 {
+		response {
+			ok 0 : boolean
+		}
+	}
+
+	bar 13 {
+		response nil
+	}
+
+	blackhole 14 {
+	}
+}
+
+
 ]]
 
 local client_proto = sproto.parse [[
@@ -99,3 +126,66 @@ print("tag =", tag)
 print_r(server_proto:request_decode("foobar", v))
 local v = server_proto:response_encode("foobar", { ok = true })
 print_r(server_proto:response_decode("foobar", v))
+
+
+
+------------------------------namespace------------------------------
+
+print("=== default table")
+
+print_r(server_proto:default("package"))
+print_r(server_proto:default("test.foobar", "REQUEST"))
+assert(server_proto:default("test.foo", "REQUEST")==nil)
+assert(server_proto:request_encode("test.foo")=="")
+server_proto:response_encode("test.foo", { ok = true })
+assert(server_proto:request_decode("test.blackhole")==nil)
+assert(server_proto:response_decode("test.blackhole")==nil)
+
+print("=== test 1")
+
+-- The type package must has two field : type and session
+local server = server_proto:host "package"
+local client = client_proto:host "package"
+local client_request = client:attach(server_proto)
+
+print("client request foobar")
+local req = client_request("test.foobar", { what = "foo" }, 1)
+print("request foobar size =", #req)
+local type, name, request, response = server:dispatch(req)
+assert(type == "REQUEST" and name == "test.foobar")
+print_r(request)
+print("server response")
+local resp = response { ok = true }
+print("response package size =", #resp)
+print("client dispatch")
+local type, session, response = client:dispatch(resp)
+assert(type == "RESPONSE" and session == 1)
+print_r(response)
+
+local req = client_request("test.foo", nil, 2)
+print("request foo size =", #req)
+local type, name, request, response = server:dispatch(req)
+assert(type == "REQUEST" and name == "test.foo" and request == nil)
+local resp = response { ok = false }
+print("response package size =", #resp)
+print("client dispatch")
+local type, session, response = client:dispatch(resp)
+assert(type == "RESPONSE" and session == 2)
+print_r(response)
+
+local req = client_request("test.bar", nil, 3)
+print("request bar size =", #req)
+local type, name, request, response = server:dispatch(req)
+assert(type == "REQUEST" and name == "test.bar" and request == nil)
+assert(select(2,client:dispatch(response())) == 3)
+
+local req = client_request "test.blackhole"	-- no response
+print("request blackhole size = ", #req)
+
+print("=== test 2")
+local v, tag = server_proto:request_encode("test.foobar", { what = "hello"})
+assert(tag == 1)	-- foobar : 1
+print("tag =", tag)
+print_r(server_proto:request_decode("test.foobar", v))
+local v = server_proto:response_encode("test.foobar", { ok = true })
+print_r(server_proto:response_decode("test.foobar", v))
