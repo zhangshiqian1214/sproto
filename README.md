@@ -274,6 +274,27 @@ Notice: If the tag is not declared in schema, the decoder will simply ignore the
 }
 ```
 
+Using namespace in sproto:
+
+```
+login {
+   .Player {  			# define a struct with login.Player
+   	name 0 : string
+    	age 1 : integer
+    	marital 2 : boolean
+   }
+   
+   auth 1 { 			# define a new protocol login.auth (for RPC used) with tag 1
+   	request {       	# Associate the type Person with login.auth.request
+	    account 0 : string
+	    password 1 : string
+	} 
+    	response Player		# define the login.auth.response type
+   }
+}
+
+```
+
 Example 1:
 
 ```
